@@ -1,0 +1,13 @@
+[project]
+name = "simple-instagram"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "aiosqlite>=0.22.1",
+    "fastapi>=0.124.2",
+    "fastapi-users[sqlalchemy]>=15.0.3",
+    "imagekitio>=5.1.0",
+    "python-dotenv>=1.2.1",
+]

@@ -9,4 +9,5 @@ dependencies = []
 [tool.uv.workspace]
 members = [
     "FastAPI/introduction",
+    "FastAPI/Simple Instagram",
 ]
