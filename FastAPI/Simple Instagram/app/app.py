@@ -4,6 +4,7 @@ from app.db import create_db_and_tables, Post, get_async_session
 from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import PostResponse
+from app.imagekit_manager import ImageKitHandler
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -19,11 +20,15 @@ async def upload_file(
     caption: str = Form(""),
     session: AsyncSession = Depends(get_async_session)
 ):
+
+    imagekit_result = ImageKitHandler().upload_image(file)
+    print("ImageKit upload result:", imagekit_result)
+
     post = Post(
         caption=caption,
-        url="dummy url",
-        file_type="photo",
-        file_name="dummy name"
+        url=imagekit_result['response']['url'],
+        file_type=imagekit_result['response']['fileType'],
+        file_name=imagekit_result['response']['name']
     )
 
     session.add(post)
