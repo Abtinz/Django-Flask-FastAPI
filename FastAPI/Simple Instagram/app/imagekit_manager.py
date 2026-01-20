@@ -64,3 +64,4 @@ class ImageKitHandler():
         finally:
             if temp_file_path and os.path.exists(temp_file_path):
                 os.unlink(temp_file_path)
+            file.file.close()
