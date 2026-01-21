@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, Form, Depends
-from fastapi import 
+from fastapi import status as HttpStatus
 from app.db import create_db_and_tables, Post, get_async_session
 from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -25,6 +25,12 @@ app.include_router(
 app.include_router(
     fastapi_users.get_users_router(), prefix="/users", tags=["users"]
 )       
+app.include_router( 
+    fastapi_users.get_reset_password_router(), prefix="/auth", tags=["auth"]
+)
+app.include_router(
+    fastapi_users.get_verify_router(), prefix="/auth", tags=["auth"]
+) 
 
 @app.post("/upload")
 async def upload_file(
@@ -58,14 +64,26 @@ async def get_posts(session: AsyncSession = Depends(get_async_session)):
 
 @app.delete("/posts/{post_id}")
 async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_session)):
+    '''Delete a post by its ID.
+    
+    Args:
+        post_id (str): The ID of the post to delete.
+        session (AsyncSession): The database session.
+    Returns:
+            dict: A message indicating the result of the deletion.
+    '''
+
     result = await session.execute(select(Post).where(Post.id == post_id))
     post = result.scalar_one_or_none()
     if post is None:
         return {
             "error": "Post not found",
-            "code": HttpStatus.NOT_FOUND
-            }
+            "code": HttpStatus.HTTP_404_NOT_FOUND
+        }
 
     await session.delete(post)
     await session.commit()
-    return {"message": "Post deleted successfully"}
+    return {
+        "message": "Post deleted successfully"
+    }
+
