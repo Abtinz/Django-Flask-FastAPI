@@ -4,7 +4,7 @@ from fastapi import status as HttpStatus
 from app.db import create_db_and_tables, Post, get_async_session
 from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.schemas import PostResponse
+from app.schemas import PostResponse, PostCreate, UserRead, UserCreate, UserUpdate
 from app.imagekit_manager import ImageKitHandler
 from app.users_manager import fastapi_users, current_active_user, auth_backend
 
@@ -20,16 +20,16 @@ app.include_router(
     fastapi_users.get_auth_router(auth_backend), prefix="/auth/jwt", tags=["auth"]
 )
 app.include_router(
-    fastapi_users.get_register_router(), prefix="/auth", tags=["auth"]
+    fastapi_users.get_register_router(UserRead, UserCreate), prefix="/auth", tags=["auth"]
 )
 app.include_router(
-    fastapi_users.get_users_router(), prefix="/users", tags=["users"]
+    fastapi_users.get_users_router(UserRead, UserUpdate), prefix="/users", tags=["users"]
 )       
 app.include_router( 
     fastapi_users.get_reset_password_router(), prefix="/auth", tags=["auth"]
 )
 app.include_router(
-    fastapi_users.get_verify_router(), prefix="/auth", tags=["auth"]
+    fastapi_users.get_verify_router(UserRead), prefix="/auth", tags=["auth"]
 ) 
 
 @app.post("/upload")
