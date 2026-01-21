@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, Form, Depends
 from fastapi import status as HttpStatus
-from app.db import create_db_and_tables, Post, get_async_session
+from app.db import User, create_db_and_tables, Post, get_async_session
 from sqlalchemy import text, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.schemas import PostResponse, PostCreate, UserRead, UserCreate, UserUpdate
@@ -35,6 +35,7 @@ app.include_router(
 @app.post("/upload")
 async def upload_file(
     file: UploadFile = File(...),
+    user: User = Depends(current_active_user),
     caption: str = Form(""),
     session: AsyncSession = Depends(get_async_session)
 ):
@@ -46,8 +47,11 @@ async def upload_file(
         caption=caption,
         url=imagekit_result['response']['url'],
         file_type=imagekit_result['response']['fileType'],
-        file_name=imagekit_result['response']['name']
+        file_name=imagekit_result['response']['name'],
+        user_id=user.id
     )
+
+    print(post)
 
     session.add(post)
     await session.commit()
@@ -57,13 +61,20 @@ async def upload_file(
     return post
 
 @app.get("/posts/", response_model=list[PostResponse])
-async def get_posts(session: AsyncSession = Depends(get_async_session)):
+async def get_posts(
+    session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user)
+):
     result = await session.execute(select(Post))
     posts = result.scalars().all()
     return posts
 
 @app.delete("/posts/{post_id}")
-async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_session)):
+async def delete_post(
+    post_id: str,
+      session: AsyncSession = Depends(get_async_session),
+    user: User = Depends(current_active_user)
+):
     '''Delete a post by its ID.
     
     Args:
@@ -79,6 +90,12 @@ async def delete_post(post_id: str, session: AsyncSession = Depends(get_async_se
         return {
             "error": "Post not found",
             "code": HttpStatus.HTTP_404_NOT_FOUND
+        }
+    
+    if post.user_id != user.id:
+        return {
+            "error": "You do not have permission to delete this post",
+            "code": HttpStatus.HTTP_403_FORBIDDEN
         }
 
     await session.delete(post)
